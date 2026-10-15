@@ -11,7 +11,7 @@ import { Spinner } from '../../components/Spinner';
 import { useToast } from '../../context/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { fetchStudentAssignments, submitAssignment } from '../../services/academicService';
-import { assignmentTitle, formatDateTime } from '../../utils/format';
+import { assignmentDescription, assignmentTitle, formatDateTime, lateSubmissionLabel } from '../../utils/format';
 
 const ACCEPT = '.pdf,.jpg,.jpeg,.pptx,.doc,.docx';
 const EXTENSIONS = new Set(['pdf', 'jpg', 'jpeg', 'pptx', 'doc', 'docx']);
@@ -49,7 +49,11 @@ export function AssignmentSubmitPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const locked = assignment && (assignment.status === 'closed' || assignment.submissionStatus === 'Graded' || (assignment.submissionStatus !== 'Not Submitted' && !assignment.allowResubmission));
+  const pastDue = assignment && new Date(assignment.dueDate).getTime() < Date.now();
+  const lateClosed = assignment && assignment.allowLate === false && pastDue;
+  const locked = assignment && (assignment.status === 'closed' || lateClosed || assignment.submissionStatus === 'Graded' || (assignment.submissionStatus !== 'Not Submitted' && !assignment.allowResubmission));
+  const notice = !locked ? '' : assignment.status === 'closed' ? 'This assignment is closed.' : lateClosed ? 'Late submissions are not accepted.' : 'This submission is closed.';
+  const description = assignment ? assignmentDescription(assignment.description, notice) : '';
 
   async function onSubmit(event) {
     event.preventDefault();
@@ -94,10 +98,11 @@ export function AssignmentSubmitPage() {
           <CourseStatus status={assignment.submissionStatus} />
           <ScheduleText course={assignment} empty="No class days or time set" />
           <p className="text-sm text-gray-600">Due {formatDateTime(assignment.dueDate).label} · {assignment.maxMarks} marks</p>
-          {assignment.description ? <p className="whitespace-pre-wrap text-sm text-gray-700">{assignment.description}</p> : null}
+          <p className="text-sm text-gray-600">{lateSubmissionLabel(assignment)}</p>
+          {description ? <p className="whitespace-pre-wrap text-sm text-gray-700">{description}</p> : null}
           {assignment.downloadPath ? <a className="text-sm text-primary hover:underline" href={assignment.downloadPath}>Assignment file</a> : null}
           {assignment.submission?.downloadPath ? <a className="block text-sm text-primary hover:underline" href={assignment.submission.downloadPath}>Your file{assignment.submission.originalName ? `: ${assignment.submission.originalName}` : ''}</a> : null}
-          {locked ? <p className="text-sm text-gray-600">{assignment.status === 'closed' ? 'This assignment is closed.' : 'This submission is closed.'}</p> : (
+          {locked ? <p className="text-sm text-gray-600">{notice}</p> : (
             <form className="space-y-3" onSubmit={onSubmit}>
               <FormField id="submission-file" label="Your file">
                 <input id="submission-file" name="file" type="file" accept={ACCEPT} className={inputClassName} required />

@@ -7,7 +7,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { fetchStudentCourse } from '../../services/academicService';
 import { PageHeader } from '../../components/PageHeader';
 import { ScheduleText } from '../../components/ScheduleText';
-import { assignmentTitle, formatDateTime } from '../../utils/format';
+import { assignmentTitle, formatDateTime, lateSubmissionLabel } from '../../utils/format';
 
 export function StudentCoursePage() {
   const { courseId } = useParams();
@@ -61,6 +61,7 @@ export function StudentCoursePage() {
               <div>
                 <p className="font-medium">{assignmentTitle(item)}</p>
                 <p className="text-gray-600">Due {formatDateTime(item.dueDate).label}</p>
+                <p className="text-gray-600">{lateSubmissionLabel(item)}</p>
               </div>
               <CourseStatus status={item.submissionStatus} />
             </li>

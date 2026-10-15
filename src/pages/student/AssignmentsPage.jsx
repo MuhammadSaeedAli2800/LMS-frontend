@@ -11,7 +11,7 @@ import { useToast } from '../../context/ToastContext';
 import { PageHeader } from '../../components/PageHeader';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { fetchStudentAssignments, fetchStudentCourses, submitAssignment } from '../../services/academicService';
-import { assignmentTitle, formatDateTime } from '../../utils/format';
+import { assignmentDescription, assignmentTitle, formatDateTime, lateSubmissionLabel } from '../../utils/format';
 
 const ACCEPT = '.pdf,.jpg,.jpeg,.pptx,.doc,.docx';
 const EXTENSIONS = new Set(['pdf', 'jpg', 'jpeg', 'pptx', 'doc', 'docx']);
@@ -21,11 +21,22 @@ function acceptedFile(file) {
   return EXTENSIONS.has(extension);
 }
 
+function pastDue(assignment) {
+  return new Date(assignment.dueDate).getTime() < Date.now();
+}
+
 function canSubmit(assignment) {
   if (assignment.status === 'closed') return false;
+  if (assignment.allowLate === false && pastDue(assignment)) return false;
   if (assignment.submissionStatus === 'Graded') return false;
   if (assignment.submissionStatus !== 'Not Submitted' && !assignment.allowResubmission) return false;
   return true;
+}
+
+function submitMessage(assignment) {
+  if (assignment.status === 'closed') return 'This assignment is closed.';
+  if (assignment.allowLate === false && pastDue(assignment)) return 'Late submissions are not accepted.';
+  return 'This submission is closed.';
 }
 
 function courseCards(courses, assignments) {
@@ -191,18 +202,23 @@ export function StudentCourseAssignmentsPage() {
         <h2 className="text-lg font-semibold text-ink">Unsubmitted assignments</h2>
         {unsubmitted.length === 0 ? <p className="panel px-5 py-4 text-sm text-ink-muted">Every assignment has been submitted.</p> : (
           <ul className="space-y-3">
-            {unsubmitted.map((assignment) => (
+            {unsubmitted.map((assignment) => {
+              const notice = canSubmit(assignment) ? '' : submitMessage(assignment);
+              const description = assignmentDescription(assignment.description, notice);
+              return (
               <li key={assignment.id} className="panel border-l-4 border-l-warning p-5">
                 <div className="flex flex-wrap items-center gap-3">
                   <CourseStatus status={assignment.submissionStatus} />
                   <h3 className="font-semibold text-gray-900">{assignmentTitle(assignment)}</h3>
                 </div>
                 <p className="mt-2 text-sm text-gray-600">Due {formatDateTime(assignment.dueDate).label} · {assignment.maxMarks} marks</p>
-                {assignment.description ? <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{assignment.description}</p> : null}
+                <p className="mt-1 text-sm text-gray-600">{lateSubmissionLabel(assignment)}</p>
+                {description ? <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{description}</p> : null}
                 {assignment.downloadPath ? <a className="mt-2 inline-flex text-sm text-primary hover:underline" href={assignment.downloadPath}>Assignment file</a> : null}
-                {canSubmit(assignment) ? <SubmitForm assignment={assignment} onSubmitted={load} /> : <p className="mt-3 text-sm text-gray-600">This assignment is closed.</p>}
+                {canSubmit(assignment) ? <SubmitForm assignment={assignment} onSubmitted={load} /> : <p className="mt-3 text-sm text-gray-600">{notice}</p>}
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </section>
@@ -215,6 +231,7 @@ export function StudentCourseAssignmentsPage() {
                 <div>
                   <p className="font-medium text-gray-900">{assignmentTitle(assignment)}</p>
                   <p className="text-gray-600">Due {formatDateTime(assignment.dueDate).label}</p>
+                  <p className="text-gray-600">{lateSubmissionLabel(assignment)}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <CourseStatus status={assignment.submissionStatus} />

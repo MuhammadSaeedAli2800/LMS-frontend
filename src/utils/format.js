@@ -5,6 +5,19 @@ export function assignmentTitle(assignment) {
   return `Assignment ${number}: ${title}`;
 }
 
+export function lateSubmissionLabel(assignment) {
+  return assignment?.allowLate === false ? 'Late submissions are not accepted' : 'Late submissions are accepted';
+}
+
+export function assignmentDescription(description, notice) {
+  const text = String(description || '').trim();
+  const message = String(notice || '').trim();
+  if (!text) return '';
+  const normalize = (value) => value.replace(/[.!\s]+$/g, '').toLowerCase();
+  if (message && normalize(text) === normalize(message)) return '';
+  return text;
+}
+
 export function displayValue(value) {
   if (value === undefined || value === null || String(value).trim() === '') return '—';
   return String(value);

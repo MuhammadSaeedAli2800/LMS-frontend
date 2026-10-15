@@ -25,7 +25,7 @@ import {
   deleteAssignment,
 } from '../../services/academicService';
 import { ScheduleText } from '../../components/ScheduleText';
-import { assignmentTitle, formatDateTime } from '../../utils/format';
+import { assignmentTitle, formatDateTime, lateSubmissionLabel } from '../../utils/format';
 
 const TABS = ['Assignments', 'Students', 'Materials', 'Attendance', 'Announcements'];
 
@@ -121,6 +121,7 @@ export function TeacherCoursePage() {
         dueDate: new Date(localDue).toISOString(),
         maxMarks: form.get('maxMarks'),
         allowResubmission: form.get('allowResubmission') === 'on',
+        allowLate: form.get('allowLate') === 'on',
         file: form.get('file') && form.get('file').name ? form.get('file') : null,
       });
       toast.success('Assignment published.');
@@ -252,6 +253,7 @@ export function TeacherCoursePage() {
               <FormField id="assignment-due" label="Deadline"><input id="assignment-due" name="dueDate" type="datetime-local" className={inputClassName} required /></FormField>
               <FormField id="assignment-marks" label="Maximum marks"><input id="assignment-marks" name="maxMarks" type="number" min="1" max="1000" defaultValue="100" className={inputClassName} required /></FormField>
               <label className="flex items-center gap-2 text-sm text-gray-800"><input name="allowResubmission" type="checkbox" /> Allow resubmission before grading</label>
+              <label className="flex items-center gap-2 text-sm text-gray-800"><input name="allowLate" type="checkbox" defaultChecked /> Accept late submissions</label>
               <FormField id="assignment-file" label="Attachment"><input id="assignment-file" name="file" type="file" className={inputClassName} /></FormField>
               <Button type="submit" disabled={busy}>Publish assignment</Button>
             </form>
@@ -266,6 +268,7 @@ export function TeacherCoursePage() {
                       <div>
                         <p className="font-medium text-gray-900">{assignmentTitle(item)}</p>
                         <p className="text-gray-600">Due {when.label} · {item.maxMarks} marks</p>
+                        <p className="text-gray-600">{lateSubmissionLabel(item)}</p>
                       </div>
                       <div className="flex flex-wrap items-center gap-3">
                         {archived ? null : <button type="button" className="font-medium text-primary hover:underline" onClick={() => setEditingId(editingId === item.id ? '' : item.id)}>{editingId === item.id ? 'Close edit' : 'Edit'}</button>}

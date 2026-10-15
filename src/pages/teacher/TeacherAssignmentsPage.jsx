@@ -13,7 +13,7 @@ import { Spinner } from '../../components/Spinner';
 import { useToast } from '../../context/ToastContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { createAssignment, deleteAssignment, fetchTeacherAssignments, fetchTeacherCourses, setAssignmentStatus, updateAssignment } from '../../services/academicService';
-import { assignmentTitle, formatDateTime } from '../../utils/format';
+import { assignmentTitle, formatDateTime, lateSubmissionLabel } from '../../utils/format';
 
 function courseLabel(course) {
   const { days, time } = scheduleParts(course);
@@ -182,6 +182,7 @@ export function TeacherAssignmentsPage() {
                     <div>
                       <p className="font-medium text-gray-900">{assignmentTitle(item)}</p>
                       <p className="text-gray-600">Due {formatDateTime(item.dueDate).label} · {item.maxMarks} marks</p>
+                      <p className="text-gray-600">{lateSubmissionLabel(item)}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
                       <CourseStatus status={item.status} />
